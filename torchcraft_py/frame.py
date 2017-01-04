@@ -268,55 +268,53 @@ class Frame:
         self.is_terminal = next_frame.is_terminal
 
     def read(self, args, c):
-        n_player, n_bullets = 0, 0
         n_player, c = utils.get_int(args, c)
         if n_player < 0:
             utils.print_err("Corrupted replay: units n_player < 0")
             return
         for i in xrange(0, n_player):
-            idPlayer, c = utils.get_int(args, c)
-            nUnits, c = utils.get_int(args, c)
-            if nUnits < 0:
-                utils.print_err("Corrupted replay: nUnits < 0")
+            id_player, c = utils.get_int(args, c)
+            n_units, c = utils.get_int(args, c)
+            if n_units < 0:
+                utils.print_err("Corrupted replay: n_units < 0")
                 return
-            self.units[idPlayer] = []
-            for j in xrange(0, nUnits):
-                self.units[idPlayer].append(Unit())
-                c = self.units[idPlayer][j].read(args, c)
+            self.units[id_player] = []
+            for j in xrange(0, n_units):
+                self.units[id_player].append(Unit())
+                c = self.units[id_player][j].read(args, c)
 
         n_player, c = utils.get_int(args, c)
         if n_player < 0:
             utils.print_err("Corrupted replay: actions n_player < 0")
             return
         for i in xrange(0, n_player):
-            idPlayer, c = utils.get_int(args, c)
-            nActions, c = utils.get_int(args, c)
-            if nActions < 0:
-                utils.print_err("Corrupted replay: nActions < 0")
+            id_player, c = utils.get_int(args, c)
+            n_actions, c = utils.get_int(args, c)
+            if n_actions < 0:
+                utils.print_err("Corrupted replay: n_actions < 0")
                 return
-            self.actions[idPlayer] = []
-            for j in xrange(0, nActions):
-                self.actions[idPlayer].append(Action())
-                self.actions[idPlayer][j].uid, c = utils.get_int(args, c)
-                self.actions[idPlayer][j].aid, c = utils.get_int(args, c)
-                sizeA, c = utils.get_int(args, c)
-                if sizeA < 0:
-                    utils.print_err("Corrupted replay: sizeA < 0")
+            self.actions[id_player] = []
+            for j in xrange(0, n_actions):
+                self.actions[id_player].append(Action())
+                self.actions[id_player][j].uid, c = utils.get_int(args, c)
+                self.actions[id_player][j].aid, c = utils.get_int(args, c)
+                size_a, c = utils.get_int(args, c)
+                if size_a < 0:
+                    utils.print_err("Corrupted replay: size_a < 0")
                     return
 
-                self.actions[idPlayer][j].action = [0] * sizeA
-                for k in xrange(0, sizeA):
-                    self.actions[idPlayer][j].action[k], c = utils.get_int(args,
-                                                                           c)
+                self.actions[id_player][j].action = [0] * size_a
+                for k in xrange(0, size_a):
+                    self.actions[id_player][j].action[k], c = utils.get_int(args, c)
 
         n_player, c = utils.get_int(args, c)
         if n_player < 0:
             utils.print_err("Corrupted replay: resources n_player < 0")
             return
         for i in xrange(0, n_player):
-            idPlayer, c = utils.get_int(args, c)
-            self.resources[idPlayer] = Resources()
-            c = self.resources[idPlayer].read(args, c)
+            id_player, c = utils.get_int(args, c)
+            self.resources[id_player] = Resources()
+            c = self.resources[id_player].read(args, c)
 
         n_bullets, c = utils.get_int(args, c)
         if n_bullets < 0:
