@@ -76,7 +76,7 @@ class Unit:
             return
 
         self.orders = []
-        for i in xrange(0, n_orders):
+        for i in range(0, n_orders):
             self.orders.append(Order())
             self.orders[i].first_frame, c = utils.get_int(args, c)
             self.orders[i].type, c = utils.get_int(args, c)
@@ -197,17 +197,16 @@ class Frame:
     """
 
     def filter(self, x, y, o):
-        inRadius = lambda (ux, uy): (x / 8 - ux) * (x / 8 - ux) + (
-                                                                      y / 8 - uy) * (
-                                                                      y / 8 - uy) <= 20 * 4 * 20 * 4
+        def in_radius(ux, uy):
+            return (x / 8 - ux) * (x / 8 - ux) + (y / 8 - uy) * (y / 8 - uy) <= 20 * 4 * 20 * 4
 
         for player in self.units.items():
             o.units[player[0]] = []
             for unit in player[1]:
-                if inRadius(unit.x, unit.y):
+                if in_radius(unit.x, unit.y):
                     o.units[player[0]].append(unit)
         for bullet in self.bullets:
-            if inRadius(bullet.x, bullet.y):
+            if in_radius(bullet.x, bullet.y):
                 o.bullets.append(bullet)
 
     @staticmethod
@@ -250,9 +249,9 @@ class Frame:
                     # Take unit state from next frame but accumulate orders
                     # so as to have a vector of all the orders taken
                     ords = self.units[player_id][i].orders
-                    for ord in unit.orders:
-                        if len(ords) == 0 or ord != ords[-1]:
-                            ords.append(ord)
+                    for order in unit.orders:
+                        if len(ords) == 0 or order != ords[-1]:
+                            ords.append(order)
                     self.units[player_id][i] = unit
                     self.units[player_id][i].orders = ords
             # For resources: keep the ones of the next frame
@@ -269,12 +268,12 @@ class Frame:
         self.is_terminal = next_frame.is_terminal
 
     def read(self, args, c):
-        nPlayer, nBullets = 0, 0
-        nPlayer, c = utils.get_int(args, c)
-        if nPlayer < 0:
-            utils.print_err("Corrupted replay: units nPlayer < 0")
+        n_player, n_bullets = 0, 0
+        n_player, c = utils.get_int(args, c)
+        if n_player < 0:
+            utils.print_err("Corrupted replay: units n_player < 0")
             return
-        for i in xrange(0, nPlayer):
+        for i in xrange(0, n_player):
             idPlayer, c = utils.get_int(args, c)
             nUnits, c = utils.get_int(args, c)
             if nUnits < 0:
@@ -285,11 +284,11 @@ class Frame:
                 self.units[idPlayer].append(Unit())
                 c = self.units[idPlayer][j].read(args, c)
 
-        nPlayer, c = utils.get_int(args, c)
-        if nPlayer < 0:
-            utils.print_err("Corrupted replay: actions nPlayer < 0")
+        n_player, c = utils.get_int(args, c)
+        if n_player < 0:
+            utils.print_err("Corrupted replay: actions n_player < 0")
             return
-        for i in xrange(0, nPlayer):
+        for i in xrange(0, n_player):
             idPlayer, c = utils.get_int(args, c)
             nActions, c = utils.get_int(args, c)
             if nActions < 0:
@@ -310,20 +309,20 @@ class Frame:
                     self.actions[idPlayer][j].action[k], c = utils.get_int(args,
                                                                            c)
 
-        nPlayer, c = utils.get_int(args, c)
-        if nPlayer < 0:
-            utils.print_err("Corrupted replay: resources nPlayer < 0")
+        n_player, c = utils.get_int(args, c)
+        if n_player < 0:
+            utils.print_err("Corrupted replay: resources n_player < 0")
             return
-        for i in xrange(0, nPlayer):
+        for i in xrange(0, n_player):
             idPlayer, c = utils.get_int(args, c)
             self.resources[idPlayer] = Resources()
             c = self.resources[idPlayer].read(args, c)
 
-        nBullets, c = utils.get_int(args, c)
-        if nBullets < 0:
-            utils.print_err("Corrupted replay: nBullets < 0")
+        n_bullets, c = utils.get_int(args, c)
+        if n_bullets < 0:
+            utils.print_err("Corrupted replay: n_bullets < 0")
             return
-        for i in xrange(0, nBullets):
+        for i in xrange(0, n_bullets):
             self.bullets.append(Bullet())
             c = self.bullets[i].read(args, c)
         self.reward, c = utils.get_int(args, c)
