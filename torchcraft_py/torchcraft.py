@@ -84,7 +84,8 @@ class Client:
         self.message_just_sent = True
 
     def close(self):
-        self.socket.close()
+        if self.socket is not None:
+            self.socket.close()
 
 
 class ServerState:
