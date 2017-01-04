@@ -19,7 +19,7 @@ class StarCraftEnv(gym.Env):
 
     def _step(self, action):
         self._send_action(action)
-        self._recv_frame()
+        self._recv_state()
 
         obs = self._get_obs()
         reward = self._get_reward()
@@ -30,7 +30,7 @@ class StarCraftEnv(gym.Env):
     def _send_action(self, action):
         self.client.send(action)
 
-    def _recv_frame(self):
+    def _recv_state(self):
         self.client.receive()
 
     def _get_reward(self):
