@@ -16,21 +16,22 @@ def play_game():
     battles_won = 0
     battles_game = 0
     env = starcraft_env.StarCraftEnv(args.server)
+    obs = env.reset()
     while total_battles < 40:
-        nloop = 1
-        obs = None
-        if np.mod(total_battles, 10) == 0:
+        nstep = 1
+        if np.mod(total_battles, 10) == 9:
             battles_won = 0
             battles_game = 0
             obs = env.reset()
         done = False
         while not done:
-            utils.progress(nloop, battles_won, battles_game, total_battles)
-            nloop += 1
+            utils.progress(nstep, battles_won, battles_game, total_battles)
+            nstep += 1
             action = get_action(obs)
-            obs, reward, done, info = env.step(action)
+            obs_next, reward, done, info = env.step(action)
             if reward > 0:
                 battles_won += 1
+            obs = obs_next
         battles_game += 1
         total_battles += 1
     env.close()
