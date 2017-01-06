@@ -39,8 +39,8 @@ if __name__ == '__main__':
             if np.mod(steps, 10) == 0:
                 utils.progress(steps, battles_won, battles_game, total_battles)
             action = agent.act(obs)
-            obs, reward, done, _ = env.step(action)
-            if reward > 0:
+            obs, reward, done, won = env.step(action)
+            if won:
                 battles_won += 1
             steps += 1
         battles_game += 1
