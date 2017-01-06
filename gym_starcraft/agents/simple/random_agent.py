@@ -31,7 +31,7 @@ if __name__ == '__main__':
         battles_won = 0
         battles_game = 0
         done = False
-        if np.mod(total_battles, 10) == 0:
+        if np.mod(total_battles, 10) == 9:
             battles_won = 0
             battles_game = 0
             obs = env.reset()
@@ -46,5 +46,4 @@ if __name__ == '__main__':
         battles_game += 1
         total_battles += 1
 
-    # Close the env and write monitor result info to disk
     env.close()
