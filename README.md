@@ -20,7 +20,7 @@ Gym StarCraft is an environment bundle for OpenAI Gym. It is based on [Facebook'
 1. Run
 
     ```
-    cd gym_starcraft/simple
+    cd gym_starcraft/agents/simple
     python random_agent.py -s $server_ip
     ```
     
