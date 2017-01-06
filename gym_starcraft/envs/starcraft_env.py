@@ -18,8 +18,8 @@ class StarCraftEnv(gym.Env):
         self.client = torchcraft.Client(server_ip)
 
         # attack, move, attack_degree, attack_distance, move_degree, move_distance
-        action_low = [-1.0, -1.0, -180.0, 0.0, -180.0, 16.0]
-        action_high = [1.0, 1.0, 180.0, 32.0, 180.0, 32.0]
+        action_low = [-1.0, -1.0, -180.0, 0.0, -180.0, 0.0]
+        action_high = [1.0, 1.0, 180.0, 32.0, 180.0, 16.0]
         self.action_space = spaces.Box(np.array(action_low),
                                        np.array(action_high))
 
