@@ -41,7 +41,8 @@ class StarCraftEnv(gym.Env):
         reward = self._get_reward(obs)
         done = self._get_status()
 
-        return obs, reward, done, bool(self.client.state.d['battle_won'])
+        return obs, reward, done, {
+            'won': bool(self.client.state.d['battle_won'])}
 
     def _send_action(self, action):
         state = self.client.state.d
@@ -115,11 +116,13 @@ class StarCraftEnv(gym.Env):
     def _get_reward(self, obs):
         reward = 0
         if self.obs_pre[5] > obs[5]:
-            reward = 1
+            reward += 1
         if self.obs_pre[0] > obs[0]:
-            reward = -1
+            reward -= 1
         if self._done() and not bool(self.client.state.d['battle_won']):
-            reward = -200
+            reward -= 50
+        if self._done() and bool(self.client.state.d['battle_won']):
+            reward += 50
         self.obs_pre = obs
         return reward
 
@@ -145,3 +148,6 @@ class StarCraftEnv(gym.Env):
         return bool(self.client.state.d['game_ended']) \
                or self.client.state.d['battle_just_ended'] \
                or self.client.state.d['waiting_for_restart']
+
+    def render(self, mode='human', close=False):
+        pass
