@@ -121,7 +121,6 @@ class StarCraftEnv(gym.Env):
         if self._done() and not bool(self.client.state.d['battle_won']):
             reward = -200
         self.obs_pre = obs
-        print reward
         return reward
 
     def _get_status(self):
