@@ -15,3 +15,14 @@ Gym StarCraft is an environment bundle for OpenAI Gym. It is based on [Facebook'
     cd gym-starcraft
     pip install -e .
     ```
+
+## Usage
+1. Run
+
+    ```
+    cd gym_starcraft/simple
+    python random_agent.py -s $server_ip
+    ```
+    
+    The `$server_ip` is the ip address of the machine running StarCraft.   
+    
