@@ -25,7 +25,8 @@ def play_game():
             obs = env.reset()
         done = False
         while not done:
-            utils.progress(nstep, battles_won, battles_game, total_battles)
+            if np.mod(nstep, 50) == 0:
+                utils.progress(nstep, battles_won, battles_game, total_battles)
             nstep += 1
             action = get_action(obs)
             obs_next, reward, done, info = env.step(action)

@@ -9,8 +9,6 @@ FRAME_SKIP = 0
 
 
 class StarCraftEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
-
     def __init__(self, server_ip):
         self.client = torchcraft.Client(server_ip)
 
@@ -21,7 +19,7 @@ class StarCraftEnv(gym.Env):
         self._send_action(action)
         self._recv_state()
 
-        obs = self._get_obs()
+        obs = self._get_observation()
         reward = self._get_reward()
         done = self._get_status()
 
@@ -38,7 +36,7 @@ class StarCraftEnv(gym.Env):
             return 1
         return 0
 
-    def _get_obs(self):
+    def _get_observation(self):
         return self.client.state.d
 
     def _get_status(self):
@@ -60,6 +58,3 @@ class StarCraftEnv(gym.Env):
         return bool(self.client.state.d['game_ended']) \
                or self.client.state.d['battle_just_ended'] \
                or self.client.state.d['waiting_for_restart']
-
-    def _render(self, mode='human', close=False):
-        pass

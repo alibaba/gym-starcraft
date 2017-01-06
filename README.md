@@ -1,5 +1,5 @@
 # gym-starcraft
-Using deep reinforcement learning to play StarCraft (Brood War).
+Gym StarCraft is an environment bundle for OpenAI Gym. It is based on [Facebook's TorchCraft](https://github.com/TorchCraft/TorchCraft), which is a bridge between Torch and StarCraft for AI research.
 
 ## Installation
 

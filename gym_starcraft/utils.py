@@ -1,3 +1,20 @@
+import math
+
+
+def get_degree(x1, y1, x2, y2):
+    radians = math.atan2(y2 - y1, x2 - x1)
+    return math.degrees(radians)
+
+
+def get_distance(x1, y1, x2, y2):
+    return math.hypot(x2 - x1, y2 - y1)
+
+
+def get_position(degree, distance, x1, y1):
+    theta = math.pi / 2 - math.radians(degree)
+    return x1 + distance * math.sin(theta), y1 + distance * math.cos(theta)
+
+
 def print_err(msg):
     raise RuntimeError(msg)
 
@@ -92,3 +109,4 @@ def progress(nloop, battles_won, battles_game, total_battles):
     print "Loop: %5d | WinRate: %1.3f | #Wins: %4d | #Battles: %4d | #TotalBattles: %4d" % (
         nloop, battles_won / (battles_game + 1E-6), battles_won, battles_game,
         total_battles)
+
