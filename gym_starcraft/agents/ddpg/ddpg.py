@@ -20,12 +20,15 @@ if args.server:
     SERVER_IP = args.server
 
 timestamp = time.strftime("%Y%m%d%H%M%S")
+nb_episode_steps = 500
+
 # Get the environment and extract the number of actions.
-env = sc.StarCraftEnv(args.server)
+env = sc.StarCraftEnv(args.server, nb_episode_steps)
 np.random.seed(123)
 env.seed(123)
 ENV_NAME = "StarCraft"
 nb_actions = env.action_space.shape[0]
+nb_states = env.observation_space.shape[0]
 
 # Next, we build a very simple model.
 actor = Sequential()
@@ -37,7 +40,7 @@ actor.add(Activation('relu'))
 actor.add(Dense(16))
 actor.add(Activation('relu'))
 actor.add(Dense(nb_actions))
-actor.add(Activation('linear'))
+actor.add(Activation('tanh'))
 print(actor.summary())
 
 action_input = Input(shape=(nb_actions,), name='action_input')
@@ -56,10 +59,9 @@ x = Activation('linear')(x)
 critic = Model(input=[action_input, observation_input], output=x)
 print(critic.summary())
 
-# Finally, we configure and compile our agent. You can use every built-in Keras optimizer and
-# even the metrics!
+# Finally, we configure and compile our agent.
 memory = SequentialMemory(limit=100000, window_length=1)
-random_process = OrnsteinUhlenbeckProcess(theta=.15, mu=0., sigma=.3, size=6)
+random_process = OrnsteinUhlenbeckProcess(theta=.15, mu=0., sigma=.3, size=3)
 agent = DDPGAgent(nb_actions=nb_actions, actor=actor, critic=critic,
                   critic_action_input=action_input,
                   memory=memory, nb_steps_warmup_critic=100,
@@ -68,16 +70,17 @@ agent = DDPGAgent(nb_actions=nb_actions, actor=actor, critic=critic,
                   target_model_update=1e-3)
 agent.compile(Adam(lr=.001, clipnorm=1.), metrics=['mae'])
 
-# Okay, now it's time to learn something! We visualize the training here for show, but this
-# slows down training quite a lot. You can always safely abort the training prematurely using
-# Ctrl + C.
-agent.fit(env, nb_steps=50000, visualize=True, verbose=2,
-          nb_max_episode_steps=200)
+agent.load_weights('ddpg_{}_weights.h5f'.format(ENV_NAME))
 
-print 'save into ddpg_{}_weights_{}.h5f'.format(ENV_NAME, timestamp)
+# Okay, now it's time to learn something!
+agent.fit(env, nb_steps=10000, visualize=True, verbose=2,
+          nb_max_episode_steps=nb_episode_steps)
+
 # After training is done, we save the final weights.
+agent.save_weights('ddpg_{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 agent.save_weights('ddpg_{}_weights_{}.h5f'.format(ENV_NAME, timestamp),
                    overwrite=True)
 
-# Finally, evaluate our algorithm for 5 episodes.
-agent.test(env, nb_episodes=5, visualize=True, nb_max_episode_steps=200)
+# Finally, evaluate our algorithm for 10 episodes.
+agent.test(env, nb_episodes=10, visualize=True,
+           nb_max_episode_steps=nb_episode_steps)

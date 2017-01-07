@@ -10,25 +10,27 @@ import gym_starcraft.utils as utils
 
 DEBUG = 0
 SPEED = 0
-FRAME_SKIP = 9
+FRAME_SKIP = 0
+DISTANCE_FACTOR = 16
 
 
 class StarCraftEnv(gym.Env):
-    def __init__(self, server_ip):
+    def __init__(self, server_ip, nb_episode_steps):
         self.client = torchcraft.Client(server_ip)
+        self.nb_episode_steps = nb_episode_steps
 
         # TODO: adapt to non-1v1 scenarios
 
-        # attack, move, attack_degree, attack_distance, move_degree, move_distance
-        action_low = [-1.0, -1.0, -180.0, 0.0, -180.0, 0.0]
-        action_high = [1.0, 1.0, 180.0, 32.0, 180.0, 16.0]
+        # attack or move, move_degree, move_distance
+        action_low = [-1.0, -1.0, -1.0]
+        action_high = [1.0, 1.0, 1.0]
         self.action_space = spaces.Box(np.array(action_low),
                                        np.array(action_high))
 
-        # hit points, cooldown, is enemy, degree, distance (myself)
-        # hit points, cooldown, is enemy (enemy)
-        obs_low = [0.0, 0.0, 0.0, -180.0, 0.0, 0.0, 0.0, 0.0]
-        obs_high = [100.0, 100.0, 1.0, 180.0, 1000.0, 100.0, 100.0, 1.0]
+        # hit points, cooldown, ground range, is enemy, degree, distance (myself)
+        # hit points, cooldown, ground range, is enemy (enemy)
+        obs_low = [0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        obs_high = [100.0, 100.0, 1.0, 1.0, 1.0, 50.0, 100.0, 100.0, 1.0, 1.0]
         self.observation_space = spaces.Box(np.array(obs_low),
                                             np.array(obs_high))
 
@@ -36,6 +38,8 @@ class StarCraftEnv(gym.Env):
         self.client.close()
 
     def _step(self, action):
+        self.nb_steps += 1
+
         self._send_action(action)
         obs = self._recv_observation()
         reward = self._get_reward(obs)
@@ -61,7 +65,7 @@ class StarCraftEnv(gym.Env):
             enemy = ut
 
         cmds = []
-        if action[0] > action[1]:
+        if action[0] > 0:
             # Attack action
             if myself is None or enemy is None:
                 return self.client.send("")
@@ -74,8 +78,8 @@ class StarCraftEnv(gym.Env):
             if myself is None or enemy is None:
                 self.client.send("")
                 return
-            degree = action[4]
-            distance = action[5]
+            degree = action[1] * 180
+            distance = (action[2] + 1) * DISTANCE_FACTOR
             x2, y2 = utils.get_position(degree, distance, myself.x, -myself.y)
             cmds.append(proto.concat_cmd(
                 proto.commands['command_unit_protected'], myself_id,
@@ -102,27 +106,33 @@ class StarCraftEnv(gym.Env):
         if myself is not None and enemy is not None:
             obs[0] = myself.health
             obs[1] = myself.groundCD
-            obs[2] = 0.0
-            obs[3] = utils.get_degree(myself.x, -myself.y, enemy.x, -enemy.y)
-            obs[4] = utils.get_distance(myself.x, -myself.y, enemy.x, -enemy.y)
-            obs[5] = enemy.health
-            obs[6] = enemy.groundCD
-            obs[7] = 1.0
+            obs[2] = myself.groundRange / DISTANCE_FACTOR - 1
+            obs[3] = 0.0
+            obs[4] = utils.get_degree(myself.x, -myself.y, enemy.x,
+                                      -enemy.y) / 180
+            obs[5] = utils.get_distance(myself.x, -myself.y, enemy.x,
+                                        -enemy.y) / DISTANCE_FACTOR - 1
+            obs[6] = enemy.health
+            obs[7] = enemy.groundCD
+            obs[8] = enemy.groundRange / DISTANCE_FACTOR - 1
+            obs[9] = 1.0
         else:
-            obs[7] = 1.0
+            obs[9] = 1.0
 
         return obs
 
     def _get_reward(self, obs):
         reward = 0
-        if self.obs_pre[5] > obs[5]:
-            reward += 1
+        if self.obs_pre[6] > obs[6]:
+            reward = 11
         if self.obs_pre[0] > obs[0]:
-            reward -= 1
+            reward = -10
         if self._done() and not bool(self.client.state.d['battle_won']):
-            reward -= 50
+            reward = -500
         if self._done() and bool(self.client.state.d['battle_won']):
-            reward += 50
+            reward = 500
+        if self.nb_steps == self.nb_episode_steps:
+            reward = -500
         self.obs_pre = obs
         return reward
 
@@ -130,6 +140,8 @@ class StarCraftEnv(gym.Env):
         return self._done()
 
     def _reset(self):
+        self.nb_steps = 0
+
         self.client.close()
         self.client.connect()
 
