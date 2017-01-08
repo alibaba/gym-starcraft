@@ -18,6 +18,8 @@ class StarCraftEnv(gym.Env):
     def __init__(self, server_ip, nb_episode_steps):
         self.client = torchcraft.Client(server_ip)
         self.nb_episode_steps = nb_episode_steps
+        self.nb_episodes = 0
+        self.nb_won = 0
 
         # TODO: adapt to non-1v1 scenarios
 
@@ -131,8 +133,9 @@ class StarCraftEnv(gym.Env):
             reward = -500
         if self._done() and bool(self.client.state.d['battle_won']):
             reward = 500
+            self.nb_won += 1
         if self.nb_steps == self.nb_episode_steps:
-            reward = -500
+            reward = -600
         self.obs_pre = obs
         return reward
 
@@ -140,6 +143,11 @@ class StarCraftEnv(gym.Env):
         return self._done()
 
     def _reset(self):
+        print "WinRate: %1.3f | #Wins: %4d | #Battles: %4d" % (
+            self.nb_won / (self.nb_episodes + 1E-6), self.nb_won,
+            self.nb_episodes)
+
+        self.nb_episodes += 1
         self.nb_steps = 0
 
         self.client.close()

@@ -73,7 +73,7 @@ agent.compile(Adam(lr=.001, clipnorm=1.), metrics=['mae'])
 agent.load_weights('ddpg_{}_weights.h5f'.format(ENV_NAME))
 
 # Okay, now it's time to learn something!
-agent.fit(env, nb_steps=10000, visualize=True, verbose=2,
+agent.fit(env, nb_steps=20000, visualize=True, verbose=2,
           nb_max_episode_steps=nb_episode_steps)
 
 # After training is done, we save the final weights.
@@ -82,5 +82,5 @@ agent.save_weights('ddpg_{}_weights_{}.h5f'.format(ENV_NAME, timestamp),
                    overwrite=True)
 
 # Finally, evaluate our algorithm for 10 episodes.
-agent.test(env, nb_episodes=10, visualize=True,
-           nb_max_episode_steps=nb_episode_steps)
+agent.test(env, nb_episodes=30, visualize=True,
+           nb_max_episode_steps=nb_episode_steps * 2)
