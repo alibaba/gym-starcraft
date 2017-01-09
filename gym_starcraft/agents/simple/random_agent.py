@@ -18,7 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--server', help='server ip')
     args = parser.parse_args()
 
-    env = sc.StarCraftEnv(args.server)
+    env = sc.StarCraftEnv(args.server, 2000)
     env.seed(0)
     agent = RandomAgent(env.action_space)
 
