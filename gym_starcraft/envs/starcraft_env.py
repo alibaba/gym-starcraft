@@ -36,6 +36,8 @@ class StarCraftEnv(gym.Env):
         self.observation_space = spaces.Box(np.array(obs_low),
                                             np.array(obs_high))
 
+        self.nb_steps = 0
+
     def __del__(self):
         self.client.close()
 
@@ -46,6 +48,9 @@ class StarCraftEnv(gym.Env):
         obs = self._recv_observation()
         reward = self._get_reward(obs)
         done = self._get_status()
+
+        if self.nb_steps == self.nb_episode_steps - 2:
+            self._restart()
 
         return obs, reward, done, {
             'won': bool(self.client.state.d['battle_won'])}
@@ -125,16 +130,16 @@ class StarCraftEnv(gym.Env):
 
     def _get_reward(self, obs):
         reward = 0
-        if obs[5] + 1 > 2:
+        if obs[5] + 1 > 1.5:
             reward = -1
         if self.obs_pre[6] > obs[6]:
-            reward = 11
+            reward = 15
         if self.obs_pre[0] > obs[0]:
             reward = -10
         if self._done() and not bool(self.client.state.d['battle_won']):
             reward = -500
         if self._done() and bool(self.client.state.d['battle_won']):
-            reward = 500
+            reward = 1000
             self.nb_won += 1
         if self.nb_steps == self.nb_episode_steps:
             reward = -500
@@ -144,6 +149,11 @@ class StarCraftEnv(gym.Env):
     def _get_status(self):
         return self._done()
 
+    def _restart(self):
+        restart = [proto.concat_cmd(proto.commands['restart'])]
+        self.client.send(restart)
+        self.client.receive()
+
     def _reset(self):
         print "WinRate: %1.3f | #Wins: %4d | #Battles: %4d" % (
             self.nb_won / (self.nb_episodes + 1E-6), self.nb_won,
@@ -151,7 +161,6 @@ class StarCraftEnv(gym.Env):
 
         self.nb_episodes += 1
         self.nb_steps = 0
-
         self.client.close()
         self.client.connect()
 
@@ -168,8 +177,7 @@ class StarCraftEnv(gym.Env):
 
     def _done(self):
         return bool(self.client.state.d['game_ended']) \
-               or self.client.state.d['battle_just_ended'] \
-               or self.client.state.d['waiting_for_restart']
+               or self.client.state.d['battle_just_ended']
 
     def render(self, mode='human', close=False):
         pass

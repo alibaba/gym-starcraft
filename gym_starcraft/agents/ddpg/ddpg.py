@@ -20,7 +20,7 @@ if args.server:
     SERVER_IP = args.server
 
 timestamp = time.strftime("%Y%m%d%H%M%S")
-nb_episode_steps = 5000
+nb_episode_steps = 2000
 
 # Get the environment and extract the number of actions.
 env = sc.StarCraftEnv(args.server, nb_episode_steps)
