@@ -125,6 +125,8 @@ class StarCraftEnv(gym.Env):
 
     def _get_reward(self, obs):
         reward = 0
+        if obs[5] + 1 > 2:
+            reward = -1
         if self.obs_pre[6] > obs[6]:
             reward = 11
         if self.obs_pre[0] > obs[0]:
@@ -135,7 +137,7 @@ class StarCraftEnv(gym.Env):
             reward = 500
             self.nb_won += 1
         if self.nb_steps == self.nb_episode_steps:
-            reward = -600
+            reward = -500
         self.obs_pre = obs
         return reward
 
