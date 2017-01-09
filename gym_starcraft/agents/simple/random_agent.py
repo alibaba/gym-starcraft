@@ -40,7 +40,7 @@ if __name__ == '__main__':
                 utils.progress(steps, battles_won, battles_game, total_battles)
             action = agent.act(obs)
             obs, reward, done, info = env.step(action)
-            if info['won']:
+            if info['battle_won']:
                 battles_won += 1
             steps += 1
         battles_game += 1

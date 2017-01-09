@@ -17,7 +17,8 @@ DISTANCE_FACTOR = 16
 class StarCraftEnv(gym.Env):
     def __init__(self, server_ip, nb_episode_steps):
         self.client = torchcraft.Client(server_ip)
-        self.nb_episode_steps = nb_episode_steps
+        self.nb_max_episode_steps = nb_episode_steps
+        self.nb_steps = 0
         self.nb_episodes = 0
         self.nb_won = 0
 
@@ -36,8 +37,6 @@ class StarCraftEnv(gym.Env):
         self.observation_space = spaces.Box(np.array(obs_low),
                                             np.array(obs_high))
 
-        self.nb_steps = 0
-
     def __del__(self):
         self.client.close()
 
@@ -49,11 +48,8 @@ class StarCraftEnv(gym.Env):
         reward = self._get_reward(obs)
         done = self._get_status()
 
-        if self.nb_steps == self.nb_episode_steps - 2:
-            self._restart()
-
         return obs, reward, done, {
-            'won': bool(self.client.state.d['battle_won'])}
+            'battle_won': bool(self.client.state.d['battle_won'])}
 
     def _send_action(self, action):
         state = self.client.state.d
@@ -141,7 +137,7 @@ class StarCraftEnv(gym.Env):
         if self._done() and bool(self.client.state.d['battle_won']):
             reward = 1000
             self.nb_won += 1
-        if self.nb_steps == self.nb_episode_steps:
+        if self.nb_steps == self.nb_max_episode_steps:
             reward = -500
         self.obs_pre = obs
         return reward
@@ -150,17 +146,22 @@ class StarCraftEnv(gym.Env):
         return self._done()
 
     def _restart(self):
-        restart = [proto.concat_cmd(proto.commands['restart'])]
-        self.client.send(restart)
+        self.client.send([proto.concat_cmd(proto.commands['restart'])])
         self.client.receive()
+        while not bool(self.client.state.d['game_ended']):
+            self.client.send("")
+            self.client.receive()
 
     def _reset(self):
         print "WinRate: %1.3f | #Wins: %4d | #Battles: %4d" % (
             self.nb_won / (self.nb_episodes + 1E-6), self.nb_won,
             self.nb_episodes)
 
-        self.nb_episodes += 1
+        if self.nb_steps == self.nb_max_episode_steps:
+            self._restart()
+
         self.nb_steps = 0
+        self.nb_episodes += 1
         self.client.close()
         self.client.connect()
 
