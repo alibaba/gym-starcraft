@@ -15,8 +15,8 @@ DISTANCE_FACTOR = 16
 
 
 class StarCraftEnv(gym.Env):
-    def __init__(self, server_ip, nb_episode_steps):
-        self.client = torchcraft.Client(server_ip)
+    def __init__(self, server_ip, server_port, nb_episode_steps):
+        self.client = torchcraft.Client(server_ip, server_port)
         self.nb_max_episode_steps = nb_episode_steps
         self.nb_steps = 0
         self.nb_episodes = 0
@@ -54,7 +54,7 @@ class StarCraftEnv(gym.Env):
     def _send_action(self, action):
         state = self.client.state.d
         if state is None:
-            return self.client.send("")
+            return self.client.send([])
 
         myself_id = None
         myself = None
@@ -71,7 +71,7 @@ class StarCraftEnv(gym.Env):
         if action[0] > 0:
             # Attack action
             if myself is None or enemy is None:
-                return self.client.send("")
+                return self.client.send([])
             # TODO: compute the enemy id based on its position
             cmds.append(proto.concat_cmd(
                 proto.commands['command_unit_protected'], myself_id,
@@ -79,7 +79,7 @@ class StarCraftEnv(gym.Env):
         else:
             # Move action
             if myself is None or enemy is None:
-                self.client.send("")
+                self.client.send([])
                 return
             degree = action[1] * 180
             distance = (action[2] + 1) * DISTANCE_FACTOR
@@ -145,26 +145,23 @@ class StarCraftEnv(gym.Env):
     def _get_status(self):
         return self._done()
 
-    def _restart(self):
-        self.client.send([proto.concat_cmd(proto.commands['restart'])])
-        self.client.receive()
-        while not bool(self.client.state.d['game_ended']):
-            self.client.send("")
-            self.client.receive()
-
     def _reset(self):
         print "WinRate: %1.3f | #Wins: %4d | #Battles: %4d" % (
             self.nb_won / (self.nb_episodes + 1E-6), self.nb_won,
             self.nb_episodes)
 
         if self.nb_steps == self.nb_max_episode_steps:
-            self._restart()
+            self.client.send([proto.concat_cmd(proto.commands['restart'])])
+            self.client.receive()
+            while not bool(self.client.state.d['game_ended']):
+                self.client.send([])
+                self.client.receive()
 
         self.nb_steps = 0
         self.nb_episodes += 1
+
         self.client.close()
         self.client.connect()
-
         setup = [proto.concat_cmd(proto.commands['set_speed'], SPEED),
                  proto.concat_cmd(proto.commands['set_gui'], 1),
                  proto.concat_cmd(proto.commands['set_frameskip'], FRAME_SKIP),

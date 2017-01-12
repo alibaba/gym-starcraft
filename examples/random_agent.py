@@ -15,10 +15,11 @@ class RandomAgent(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--server', help='server ip')
+    parser.add_argument('--ip', help='server ip')
+    parser.add_argument('--port', help='server port')
     args = parser.parse_args()
 
-    env = sc.StarCraftEnv(args.server, 2000)
+    env = sc.StarCraftEnv(args.ip, args.port, 2000)
     env.seed(0)
     agent = RandomAgent(env.action_space)
 
