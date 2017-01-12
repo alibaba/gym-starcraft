@@ -24,7 +24,6 @@ if __name__ == '__main__':
     episodes = 0
     wins = 0
     while episodes < 50:
-        steps = 0
         obs = env.reset()
         done = False
         while not done:
@@ -32,7 +31,6 @@ if __name__ == '__main__':
             obs, reward, done, info = env.step(action)
             if info['battle_won']:
                 wins += 1
-            steps += 1
         episodes += 1
 
     env.close()
