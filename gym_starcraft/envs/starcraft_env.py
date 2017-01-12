@@ -15,9 +15,9 @@ DISTANCE_FACTOR = 16
 
 
 class StarCraftEnv(gym.Env):
-    def __init__(self, server_ip, server_port, nb_episode_steps):
+    def __init__(self, server_ip, server_port, nb_max_episode_steps):
         self.client = torchcraft.Client(server_ip, server_port)
-        self.nb_max_episode_steps = nb_episode_steps
+        self.nb_max_episode_steps = nb_max_episode_steps
         self.nb_steps = 0
         self.nb_episodes = 0
         self.nb_won = 0
@@ -146,9 +146,7 @@ class StarCraftEnv(gym.Env):
         return self._done()
 
     def _reset(self):
-        print "WinRate: %1.3f | #Wins: %4d | #Battles: %4d" % (
-            self.nb_won / (self.nb_episodes + 1E-6), self.nb_won,
-            self.nb_episodes)
+        utils.print_progress(self.nb_episodes, self.nb_won, self.nb_steps)
 
         if self.nb_steps == self.nb_max_episode_steps:
             self.client.send([proto.concat_cmd(proto.commands['restart'])])
