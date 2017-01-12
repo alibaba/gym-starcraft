@@ -24,5 +24,5 @@ Gym StarCraft is an environment bundle for OpenAI Gym. It is based on [Facebook'
     python random_agent.py --ip $server_ip --port $server_port 
     ```
     
-    The `$server_ip` and `$server_port` is the ip and port of the server running StarCraft.   
+    The `$server_ip` and `$server_port` are the ip and port of the server running StarCraft.   
     
