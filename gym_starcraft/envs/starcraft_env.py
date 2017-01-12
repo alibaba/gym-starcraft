@@ -146,7 +146,7 @@ class StarCraftEnv(gym.Env):
         return self._done()
 
     def _reset(self):
-        utils.print_progress(self.nb_episodes, self.nb_won, self.nb_steps)
+        utils.print_progress(self.nb_episodes, self.nb_won)
 
         if self.nb_steps == self.nb_max_episode_steps:
             self.client.send([proto.concat_cmd(proto.commands['restart'])])

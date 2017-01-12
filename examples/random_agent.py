@@ -22,16 +22,14 @@ if __name__ == '__main__':
     env = sc.StarCraftEnv(args.ip, args.port, 2000)
     env.seed(123)
     agent = RandomAgent(env.action_space)
-    obs = env.reset()
 
     episodes = 0
     wins = 0
     while episodes < 50:
-        steps = 1
+        steps = 0
+        obs = env.reset()
         done = False
         while not done:
-            if np.mod(steps, 10) == 0:
-                utils.print_progress(episodes, wins, steps)
             action = agent.act(obs)
             obs, reward, done, info = env.step(action)
             if info['battle_won']:

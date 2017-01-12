@@ -15,6 +15,6 @@ def get_position(degree, distance, x1, y1):
     return x1 + distance * math.sin(theta), y1 + distance * math.cos(theta)
 
 
-def print_progress(episodes, wins, steps):
-    print "Episodes: %4d | Wins: %4d | WinRate: %1.3f | Steps: %5d" % (
-        episodes, wins, wins / (episodes + 1E-6), steps)
+def print_progress(episodes, wins):
+    print "Episodes: %4d | Wins: %4d | WinRate: %1.3f" % (
+        episodes, wins, wins / (episodes + 1E-6))
