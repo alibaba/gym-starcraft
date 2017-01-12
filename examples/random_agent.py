@@ -1,6 +1,6 @@
 import argparse
 
-import gym_starcraft.envs.single_battle as sc
+import gym_starcraft.envs.single_battle_env as sc
 
 
 class RandomAgent(object):
