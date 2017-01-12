@@ -1,6 +1,6 @@
 import argparse
 
-import gym_starcraft.envs.starcraft_env as sc
+import gym_starcraft.envs.single_battle as sc
 
 
 class RandomAgent(object):
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--port', help='server port')
     args = parser.parse_args()
 
-    env = sc.StarCraftEnv(args.ip, args.port, 2000)
+    env = sc.SingleBattleEnv(args.ip, args.port)
     env.seed(123)
     agent = RandomAgent(env.action_space)
 

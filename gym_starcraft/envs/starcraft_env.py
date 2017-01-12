@@ -1,179 +1,118 @@
-import numpy as np
-
 import gym
-from gym import spaces
 
-from torchcraft_py import torchcraft
-from torchcraft_py import proto
-
+import torchcraft_py.torchcraft as tc
+import torchcraft_py.proto as proto
 import gym_starcraft.utils as utils
-
-DEBUG = 0
-SPEED = 0
-FRAME_SKIP = 0
-DISTANCE_FACTOR = 16
 
 
 class StarCraftEnv(gym.Env):
-    def __init__(self, server_ip, server_port, nb_max_episode_steps):
-        self.client = torchcraft.Client(server_ip, server_port)
-        self.nb_max_episode_steps = nb_max_episode_steps
-        self.nb_steps = 0
-        self.nb_episodes = 0
-        self.nb_won = 0
+    def __init__(self, server_ip, server_port, speed, frame_skip, self_play,
+                 max_episode_steps):
+        self.client = tc.Client(server_ip, server_port)
+        self.state = self.client.state.d
 
-        # TODO: adapt to non-1v1 scenarios
+        self.speed = speed
+        self.frame_skip = frame_skip
+        self.self_play = self_play
+        self.max_episode_steps = max_episode_steps
 
-        # attack or move, move_degree, move_distance
-        action_low = [-1.0, -1.0, -1.0]
-        action_high = [1.0, 1.0, 1.0]
-        self.action_space = spaces.Box(np.array(action_low),
-                                       np.array(action_high))
+        self.episodes = 0
+        self.episode_wins = 0
+        self.episode_steps = 0
 
-        # hit points, cooldown, ground range, is enemy, degree, distance (myself)
-        # hit points, cooldown, ground range, is enemy (enemy)
-        obs_low = [0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        obs_high = [100.0, 100.0, 1.0, 1.0, 1.0, 50.0, 100.0, 100.0, 1.0, 1.0]
-        self.observation_space = spaces.Box(np.array(obs_low),
-                                            np.array(obs_high))
+        self.action_space = self._action_space()
+        self.observation_space = self._observation_space()
+
+        self.state = None
+        self.obs = None
+        self.obs_pre = None
 
     def __del__(self):
         self.client.close()
 
     def _step(self, action):
-        self.nb_steps += 1
+        self.episode_steps += 1
 
-        self._send_action(action)
-        obs = self._recv_observation()
-        reward = self._get_reward(obs)
-        done = self._get_status()
-
-        return obs, reward, done, {
-            'battle_won': bool(self.client.state.d['battle_won'])}
-
-    def _send_action(self, action):
-        state = self.client.state.d
-        if state is None:
-            return self.client.send([])
-
-        myself_id = None
-        myself = None
-        enemy_id = None
-        enemy = None
-        for uid, ut in state['units_myself'].iteritems():
-            myself_id = uid
-            myself = ut
-        for uid, ut in state['units_enemy'].iteritems():
-            enemy_id = uid
-            enemy = ut
-
-        cmds = []
-        if action[0] > 0:
-            # Attack action
-            if myself is None or enemy is None:
-                return self.client.send([])
-            # TODO: compute the enemy id based on its position
-            cmds.append(proto.concat_cmd(
-                proto.commands['command_unit_protected'], myself_id,
-                proto.unit_command_types['Attack_Unit'], enemy_id))
-        else:
-            # Move action
-            if myself is None or enemy is None:
-                self.client.send([])
-                return
-            degree = action[1] * 180
-            distance = (action[2] + 1) * DISTANCE_FACTOR
-            x2, y2 = utils.get_position(degree, distance, myself.x, -myself.y)
-            cmds.append(proto.concat_cmd(
-                proto.commands['command_unit_protected'], myself_id,
-                proto.unit_command_types['Move'], -1, x2, -y2))
-
-        return self.client.send(cmds)
-
-    def _recv_observation(self):
+        self.client.send(self._make_commands(action))
         self.client.receive()
-        return self._make_observation()
+        self.state = self.client.state.d
+        self.obs = self._make_observation()
+        reward = self._compute_reward()
+        done = self._check_done()
+        info = self._get_info()
 
-    def _make_observation(self):
-        state = self.client.state.d
-
-        myself = None
-        enemy = None
-        for uid, ut in state['units_myself'].iteritems():
-            myself = ut
-        for uid, ut in state['units_enemy'].iteritems():
-            enemy = ut
-
-        obs = np.zeros(self.observation_space.shape)
-
-        if myself is not None and enemy is not None:
-            obs[0] = myself.health
-            obs[1] = myself.groundCD
-            obs[2] = myself.groundRange / DISTANCE_FACTOR - 1
-            obs[3] = 0.0
-            obs[4] = utils.get_degree(myself.x, -myself.y, enemy.x,
-                                      -enemy.y) / 180
-            obs[5] = utils.get_distance(myself.x, -myself.y, enemy.x,
-                                        -enemy.y) / DISTANCE_FACTOR - 1
-            obs[6] = enemy.health
-            obs[7] = enemy.groundCD
-            obs[8] = enemy.groundRange / DISTANCE_FACTOR - 1
-            obs[9] = 1.0
-        else:
-            obs[9] = 1.0
-
-        return obs
-
-    def _get_reward(self, obs):
-        reward = 0
-        if obs[5] + 1 > 1.5:
-            reward = -1
-        if self.obs_pre[6] > obs[6]:
-            reward = 15
-        if self.obs_pre[0] > obs[0]:
-            reward = -10
-        if self._done() and not bool(self.client.state.d['battle_won']):
-            reward = -500
-        if self._done() and bool(self.client.state.d['battle_won']):
-            reward = 1000
-            self.nb_won += 1
-        if self.nb_steps == self.nb_max_episode_steps:
-            reward = -500
-        self.obs_pre = obs
-        return reward
-
-    def _get_status(self):
-        return self._done()
+        self.obs_pre = self.obs
+        return self.obs, reward, done, info
 
     def _reset(self):
-        utils.print_progress(self.nb_episodes, self.nb_won)
+        utils.print_progress(self.episodes, self.episode_wins)
 
-        if self.nb_steps == self.nb_max_episode_steps:
+        if not self.self_play and self.episode_steps == self.max_episode_steps:
             self.client.send([proto.concat_cmd(proto.commands['restart'])])
             self.client.receive()
             while not bool(self.client.state.d['game_ended']):
                 self.client.send([])
                 self.client.receive()
 
-        self.nb_steps = 0
-        self.nb_episodes += 1
+        self.episodes += 1
+        self.episode_steps = 0
 
         self.client.close()
         self.client.connect()
-        setup = [proto.concat_cmd(proto.commands['set_speed'], SPEED),
+        setup = [proto.concat_cmd(proto.commands['set_speed'], self.speed),
                  proto.concat_cmd(proto.commands['set_gui'], 1),
-                 proto.concat_cmd(proto.commands['set_frameskip'], FRAME_SKIP),
+                 proto.concat_cmd(proto.commands['set_frameskip'],
+                                  self.frame_skip),
                  proto.concat_cmd(proto.commands['set_cmd_optim'], 1)]
         self.client.send(setup)
         self.client.receive()
+        self.state = self.client.state.d
 
-        obs = self._make_observation()
-        self.obs_pre = obs
-        return obs
+        self.obs = self._make_observation()
+        self.obs_pre = self.obs
+        return self.obs
 
-    def _done(self):
-        return bool(self.client.state.d['game_ended']) \
-               or self.client.state.d['battle_just_ended']
+    def _action_space(self):
+        """
+        Returns a space object
+        """
+        raise NotImplementedError
+
+    def _observation_space(self):
+        """
+        Returns a space object
+        """
+        raise NotImplementedError
+
+    def _make_commands(self, action):
+        """
+        Returns a game command list based on the action
+        """
+        raise NotImplementedError
+
+    def _make_observation(self):
+        """
+        Returns a observation object based on the game state
+        """
+        raise NotImplementedError
+
+    def _compute_reward(self):
+        """
+        Returns a computed scalar value based on the game state
+        """
+        raise NotImplementedError
+
+    def _check_done(self):
+        """
+        Returns true if the episode was finished
+        """
+        return bool(self.state['game_ended']) or self.state['battle_just_ended']
+
+    def _get_info(self):
+        """
+        Returns a dictionary contains debug info
+        """
+        return {'battle_won': bool(self.state['battle_won'])}
 
     def render(self, mode='human', close=False):
         pass
