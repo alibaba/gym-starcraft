@@ -17,10 +17,12 @@ Gym StarCraft is an environment bundle for OpenAI Gym. It is based on [Facebook'
     ```
 
 ## Usage
-1. Run examples
+1. Start StarCraft with BWAPI by Chaoslauncher.
+
+2. Run examples:
 
     ```
-    cd gym_starcraft/examples
+    cd examples
     python random_agent.py --ip $server_ip --port $server_port 
     ```
     
