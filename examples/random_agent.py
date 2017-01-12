@@ -1,7 +1,5 @@
 import argparse
-import numpy as np
 
-import gym_starcraft.utils as utils
 import gym_starcraft.envs.starcraft_env as sc
 
 
@@ -9,7 +7,7 @@ class RandomAgent(object):
     def __init__(self, action_space):
         self.action_space = action_space
 
-    def act(self, observation):
+    def act(self):
         return self.action_space.sample()
 
 
@@ -30,7 +28,7 @@ if __name__ == '__main__':
         obs = env.reset()
         done = False
         while not done:
-            action = agent.act(obs)
+            action = agent.act()
             obs, reward, done, info = env.step(action)
             if info['battle_won']:
                 wins += 1
