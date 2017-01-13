@@ -73,46 +73,32 @@ class StarCraftEnv(gym.Env):
         return self.obs
 
     def _action_space(self):
-        """
-        Returns a space object
-        """
+        """Returns a space object"""
         raise NotImplementedError
 
     def _observation_space(self):
-        """
-        Returns a space object
-        """
+        """Returns a space object"""
         raise NotImplementedError
 
     def _make_commands(self, action):
-        """
-        Returns a game command list based on the action
-        """
+        """Returns a game command list based on the action"""
         raise NotImplementedError
 
     def _make_observation(self):
-        """
-        Returns a observation object based on the game state
-        """
+        """Returns a observation object based on the game state"""
         raise NotImplementedError
 
     def _compute_reward(self):
-        """
-        Returns a computed scalar value based on the game state
-        """
+        """Returns a computed scalar value based on the game state"""
         raise NotImplementedError
 
     def _check_done(self):
-        """
-        Returns true if the episode was finished
-        """
+        """Returns true if the episode was ended"""
         return bool(self.state['game_ended']) or self.state['battle_just_ended']
 
     def _get_info(self):
-        """
-        Returns a dictionary contains debug info
-        """
-        return {'battle_won': bool(self.state['battle_won'])}
+        """Returns a dictionary contains debug info"""
+        return {}
 
     def render(self, mode='human', close=False):
         pass

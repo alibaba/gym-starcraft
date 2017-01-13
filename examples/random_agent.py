@@ -22,15 +22,12 @@ if __name__ == '__main__':
     agent = RandomAgent(env.action_space)
 
     episodes = 0
-    wins = 0
     while episodes < 50:
         obs = env.reset()
         done = False
         while not done:
             action = agent.act()
             obs, reward, done, info = env.step(action)
-            if info['battle_won']:
-                wins += 1
         episodes += 1
 
     env.close()
