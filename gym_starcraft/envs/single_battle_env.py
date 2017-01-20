@@ -8,7 +8,6 @@ import starcraft_env as sc
 
 DISTANCE_FACTOR = 16
 
-
 class SingleBattleEnv(sc.StarCraftEnv):
     def __init__(self, server_ip, server_port, speed=0, frame_skip=0,
                  self_play=False, max_episode_steps=2000):
@@ -31,7 +30,7 @@ class SingleBattleEnv(sc.StarCraftEnv):
 
     def _make_commands(self, action):
         cmds = []
-        if self.state is None:
+        if self.state is None or not action:
             return cmds
 
         myself_id = None

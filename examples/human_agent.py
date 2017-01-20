@@ -1,14 +1,13 @@
 import argparse
-
 import gym_starcraft.envs.single_battle_env as sc
 
 
-class RandomAgent(object):
+class HumanAgent(object):
     def __init__(self, action_space):
         self.action_space = action_space
 
     def act(self):
-        return self.action_space.sample()
+        return None
 
 
 if __name__ == '__main__':
@@ -19,10 +18,10 @@ if __name__ == '__main__':
 
     env = sc.SingleBattleEnv(args.ip, args.port)
     env.seed(123)
-    agent = RandomAgent(env.action_space)
+    agent = HumanAgent(env.action_space)
 
     episodes = 0
-    while episodes < 50:
+    while True:
         obs = env.reset()
         done = False
         while not done:
