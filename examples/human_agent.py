@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('--port', help='server port', default="11111")
     args = parser.parse_args()
 
-    env = sc.SingleBattleEnv(args.ip, args.port)
+    env = sc.SingleBattleEnv(args.ip, args.port, speed=60)
     env.seed(123)
     agent = HumanAgent(env.action_space)
 
