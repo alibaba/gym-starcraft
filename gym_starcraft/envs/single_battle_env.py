@@ -30,7 +30,7 @@ class SingleBattleEnv(sc.StarCraftEnv):
 
     def _make_commands(self, action):
         cmds = []
-        if self.state is None or not action:
+        if self.state is None or action is None:
             return cmds
 
         myself_id = None
